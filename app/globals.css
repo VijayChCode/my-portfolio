@@ -1,0 +1,127 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  /* Glass morphism utility classes - Light theme */
+  .glass-effect {
+    @apply bg-white/40 backdrop-blur-lg border border-white/60 shadow-lg shadow-blue-100/20;
+  }
+
+  /* Glass morphism utility classes - Dark theme */
+  .glass-effect-dark {
+    @apply bg-slate-900/40 backdrop-blur-lg border border-white/10 shadow-lg shadow-blue-900/30;
+  }
+
+  .gradient-primary {
+    @apply bg-gradient-to-br from-blue-500 via-purple-500 to-pink-500;
+  }
+
+  .gradient-secondary {
+    @apply bg-gradient-to-r from-slate-900 to-slate-800;
+  }
+
+  /* Added light theme specific glass effect with better visibility */
+  .glass-effect-light {
+    @apply bg-gradient-to-br from-white/60 to-white/40 backdrop-blur-lg border border-blue-200/40 shadow-lg shadow-blue-100/30;
+  }
+
+  .glass-effect-light-secondary {
+    @apply bg-gradient-to-br from-white/50 to-blue-50/40 backdrop-blur-lg border border-blue-300/30 shadow-lg shadow-blue-200/20;
+  }
+}
+
+@layer base {
+  :root {
+    --font-sans: var(--font-geist-sans);
+    --font-mono: var(--font-geist-mono);
+    /* Updated design tokens for better light theme contrast */
+    --background: 250 30% 98%;
+    --foreground: 220 20% 10%;
+    --card: 250 50% 99%;
+    --card-foreground: 220 20% 10%;
+    --popover: 250 50% 99%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 90% 50%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 280 85% 50%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 290 90% 50%;
+    --accent-foreground: 0 0% 100%;
+    --muted: 220 20% 88%;
+    --muted-foreground: 220 15% 35%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 25% 88%;
+    --input: 220 30% 96%;
+    --ring: 220 90% 50%;
+    --chart-1: 220 90% 50%;
+    --chart-2: 280 85% 50%;
+    --chart-3: 290 90% 50%;
+    --chart-4: 260 80% 55%;
+    --chart-5: 270 75% 60%;
+    --radius: 0.75rem;
+    --sidebar-background: 250 30% 98%;
+    --sidebar-foreground: 220 20% 10%;
+    --sidebar-primary: 220 90% 50%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 280 85% 50%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 220 25% 88%;
+    --sidebar-ring: 220 90% 50%;
+  }
+
+  .dark {
+    /* Dark theme with deep blue/navy base */
+    --background: 220 30% 8%;
+    --foreground: 0 0% 95%;
+    --card: 220 40% 13%;
+    --card-foreground: 0 0% 95%;
+    --popover: 220 40% 13%;
+    --popover-foreground: 0 0% 95%;
+    --primary: 220 90% 60%;
+    --primary-foreground: 220 30% 8%;
+    --secondary: 280 85% 60%;
+    --secondary-foreground: 220 30% 8%;
+    --accent: 290 90% 60%;
+    --accent-foreground: 220 30% 8%;
+    --muted: 220 20% 25%;
+    --muted-foreground: 220 10% 70%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 220 30% 8%;
+    --border: 220 30% 20%;
+    --input: 220 30% 15%;
+    --ring: 220 90% 60%;
+    --chart-1: 220 90% 60%;
+    --chart-2: 280 85% 60%;
+    --chart-3: 290 90% 60%;
+    --chart-4: 260 80% 65%;
+    --chart-5: 270 75% 70%;
+    --sidebar-background: 220 30% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 220 90% 60%;
+    --sidebar-primary-foreground: 220 30% 8%;
+    --sidebar-accent: 280 85% 60%;
+    --sidebar-accent-foreground: 220 30% 8%;
+    --sidebar-border: 220 30% 20%;
+    --sidebar-ring: 220 90% 60%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground transition-colors duration-300;
+  }
+
+  /* Smooth transitions for theme switching */
+  html {
+    transition: background-color 0.3s ease;
+  }
+}
