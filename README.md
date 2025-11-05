@@ -30,6 +30,7 @@ A modern, elegant portfolio website showcasing computer science education, proje
 
 ## 📁 Project Structure
 
+```bash
 ├── app/
 │   ├── layout.tsx          # Root layout with fonts and providers
 │   ├── globals.css         # Global styles and theme tokens
@@ -42,7 +43,7 @@ A modern, elegant portfolio website showcasing computer science education, proje
 │       └── profile-photo.jpg # Profile image
 ├── README.md               # This file
 └── package.json            # Project dependencies
-
+```
 
 ## 📚 Content Sections
 
