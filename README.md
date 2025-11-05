@@ -30,7 +30,6 @@ A modern, elegant portfolio website showcasing computer science education, proje
 
 ## 📁 Project Structure
 
-\`\`\`
 ├── app/
 │   ├── layout.tsx          # Root layout with fonts and providers
 │   ├── globals.css         # Global styles and theme tokens
@@ -43,7 +42,7 @@ A modern, elegant portfolio website showcasing computer science education, proje
 │       └── profile-photo.jpg # Profile image
 ├── README.md               # This file
 └── package.json            # Project dependencies
-\`\`\`
+
 
 ## 📚 Content Sections
 
@@ -95,9 +94,9 @@ A modern, elegant portfolio website showcasing computer science education, proje
 - **Neuralink Seminar Presentation** - Brain-machine interfaces
 
 ### 7. **Contact Section**
-- Email: chalendravijay09@gmail.com
-- Phone: +91-9848615896
-- Location: Hanamkonda, Telangana, India
+- Email:
+- Phone:
+- Location:
 - LinkedIn & GitHub profiles
 
 ## 🎨 Design System
@@ -201,8 +200,6 @@ All sections adapt seamlessly across devices with Tailwind CSS breakpoints.
 
 ## 🔐 Admin Features
 
-**Password**: `Salendra@2004`
-
 Admin capabilities:
 - Edit name, title, and about section
 - Update contact information
@@ -275,9 +272,7 @@ This project is open source and available under the MIT License.
 - **Email**: [chalendravijay09@gmail.com](mailto:chalendravijay09@gmail.com)
 - **LinkedIn**: [Vijay Chalendra](https://linkedin.com/in/vijay-chalendra-3a771428a)
 - **GitHub**: [@VijayChCode](https://github.com/VijayChCode)
-- **Phone**: +91-9848615896
 - **Location**: Hanamkonda, Telangana 506011, India
-
 ---
 
 **Made with ❤️ using Next.js, Tailwind CSS, and React** | © 2025 Vijay Chalendra
