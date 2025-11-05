@@ -164,11 +164,11 @@ const isDarkMode = localStorage.getItem("darkMode") === "true" ||
 
 1. **Clone the repository**
 \`\`\`bash
-git clone https://github.com/VijayChCode/portfolio.git
+git clone https://github.com/VijayChCode/my-portfolio.git
 cd portfolio
 \`\`\`
 
-2. **Install dependencies**
+3. **Install dependencies**
 \`\`\`bash
 npm install
 # or
