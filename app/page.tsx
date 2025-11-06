@@ -62,7 +62,10 @@ export default function Portfolio() {
 
       if (data.resumeUrl) {
         setResumeUrl(data.resumeUrl)
-        setResumeFileName("Resume (Uploaded)")
+        // If resumeFileName is not set by upload, set a default based on URL or keep it null
+        if (!resumeFileName) {
+          setResumeFileName("Resume (Uploaded)")
+        }
       }
       if (data.profileUrl) {
         setProfilePhoto(data.profileUrl)
@@ -278,7 +281,9 @@ export default function Portfolio() {
 
       if (data.secure_url) {
         console.log("[v0] Profile photo uploaded:", data.secure_url)
-        await fetchCloudResources()
+        setProfilePhoto(data.secure_url)
+        // Then refresh to sync across tabs
+        setTimeout(() => fetchCloudResources(), 1000)
         alert("Profile photo updated successfully!")
       } else {
         alert("Error uploading photo. Please check console for details.")
@@ -318,7 +323,9 @@ export default function Portfolio() {
       if (data.secure_url) {
         console.log("[v0] Resume uploaded:", data.secure_url)
         setResumeFileName(file.name)
-        await fetchCloudResources()
+        setResumeUrl(data.secure_url)
+        // Then refresh to sync across tabs
+        setTimeout(() => fetchCloudResources(), 1000)
         alert("Resume uploaded successfully!")
       } else {
         alert("Error uploading resume. Please check console for details.")
@@ -334,16 +341,18 @@ export default function Portfolio() {
 
   const downloadResume = () => {
     if (resumeUrl) {
-      // Add download parameter to force browser to download instead of opening
-      const downloadUrl = `${resumeUrl}?fl_attachment:${resumeFileName || "Vijay_Chalendra_Resume.pdf"}`
+      const fileName = resumeFileName || "Vijay_Chalendra_Resume.pdf"
+      // Cloudinary download parameter: add ?fl_attachment to force download
+      const downloadUrl = `${resumeUrl}${resumeUrl.includes("?") ? "&" : "?"}fl_attachment`
+
       const link = document.createElement("a")
-      link.href = resumeUrl
-      link.download = resumeFileName || "Vijay_Chalendra_Resume.pdf"
+      link.href = downloadUrl
+      link.download = fileName
       link.target = "_blank"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      console.log("[v0] Resume downloaded from:", resumeUrl)
+      console.log("[v0] Resume downloaded from:", downloadUrl, "as:", fileName)
     } else {
       alert("Resume not available. Please upload one in the admin panel.")
     }
