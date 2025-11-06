@@ -11,8 +11,6 @@ import {
   Github,
   Linkedin,
   Mail,
-  Phone,
-  MapPin,
   GraduationCap,
   Award,
   Code,
@@ -22,20 +20,22 @@ import {
   Moon,
   Sun,
   Loader2,
+  Phone,
+  MapPin,
 } from "lucide-react"
 
 export default function Portfolio() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [activeSection, setActiveSection] = useState("home")
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null)
   const [profilePhoto, setProfilePhoto] = useState("/images/profile-photo.jpg")
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminPassword, setAdminPassword] = useState("")
   const [showAdminLogin, setShowAdminLogin] = useState(false)
-  const [resumeUrl, setResumeUrl] = useState<string | null>(null) // Changed from resumeFile to resumeUrl
   const [isDarkMode, setIsDarkMode] = useState(false)
-  const [isUploadingResume, setIsUploadingResume] = useState(false) // Added loading state for resume upload
-  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false) // Added loading state for photo upload
-  const [resumeFileName, setResumeFileName] = useState<string | null>(null) // Added to store the uploaded resume file name
+  const [isUploadingResume, setIsUploadingResume] = useState(false)
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false)
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null)
 
   useEffect(() => {
     const isDark = localStorage.getItem("darkMode") === "true"
@@ -48,20 +48,21 @@ export default function Portfolio() {
     }
 
     fetchCloudResources()
+
+    // Set up interval to refresh cloud resources every 5 seconds so multiple tabs stay in sync
+    const interval = setInterval(fetchCloudResources, 5000)
+    return () => clearInterval(interval)
   }, [])
 
-  // Function to fetch resources from Cloudinary
   const fetchCloudResources = async () => {
     try {
-      // Assuming you have an API route at /api/cloud-resources that serves this data
       const response = await fetch("/api/cloud-resources")
       const data = await response.json()
       console.log("[v0] Cloud resources fetched:", data)
 
       if (data.resumeUrl) {
         setResumeUrl(data.resumeUrl)
-        // Ideally, you'd also fetch and set the resume file name if available from your API
-        setResumeFileName("Resume (from Cloudinary)")
+        setResumeFileName("Resume (Uploaded)")
       }
       if (data.profileUrl) {
         setProfilePhoto(data.profileUrl)
@@ -258,7 +259,6 @@ export default function Portfolio() {
     // setResumeFile(null); // This is now handled by resumeUrl state
   }
 
-  // Updated photo upload to use Cloudinary
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file) return
@@ -267,7 +267,7 @@ export default function Portfolio() {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("fileType", "profile") // Add a type to differentiate uploads
+      formData.append("fileType", "profile")
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -277,23 +277,21 @@ export default function Portfolio() {
       const data = await response.json()
 
       if (data.secure_url) {
-        setProfilePhoto(data.secure_url)
+        console.log("[v0] Profile photo uploaded:", data.secure_url)
+        await fetchCloudResources()
         alert("Profile photo updated successfully!")
-        console.log("[v0] Profile photo uploaded to Cloudinary:", data.secure_url)
       } else {
-        // Handle cases where Cloudinary might return an error or no URL
         alert("Error uploading photo. Please check console for details.")
         console.error("[v0] Cloudinary upload response:", data)
       }
     } catch (error) {
       console.error("[v0] Upload error:", error)
-      alert("Error uploading photo. Please check console for details.")
+      alert("Error uploading photo. Please try again.")
     } finally {
       setIsUploadingPhoto(false)
     }
   }
 
-  // Updated resume upload to use Cloudinary
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (!file || file.type !== "application/pdf") {
@@ -305,7 +303,9 @@ export default function Portfolio() {
     try {
       const formData = new FormData()
       formData.append("file", file)
-      formData.append("fileType", "resume") // Add a type to differentiate uploads
+      formData.append("fileType", "resume")
+
+      console.log("[v0] Starting resume upload:", file.name)
 
       const response = await fetch("/api/upload", {
         method: "POST",
@@ -313,32 +313,33 @@ export default function Portfolio() {
       })
 
       const data = await response.json()
+      console.log("[v0] Upload response:", data)
 
       if (data.secure_url) {
-        setResumeUrl(data.secure_url)
-        setResumeFileName(file.name) // Store the actual file name
-        alert("Resume uploaded successfully to Cloudinary!")
         console.log("[v0] Resume uploaded:", data.secure_url)
+        setResumeFileName(file.name)
+        await fetchCloudResources()
+        alert("Resume uploaded successfully!")
       } else {
-        // Handle cases where Cloudinary might return an error or no URL
         alert("Error uploading resume. Please check console for details.")
-        console.error("[v0] Cloudinary upload response:", data)
+        console.error("[v0] Upload error:", data)
       }
     } catch (error) {
       console.error("[v0] Resume upload error:", error)
-      alert("Error uploading resume. Please check console for details.")
+      alert("Error uploading resume. Please try again.")
     } finally {
       setIsUploadingResume(false)
     }
   }
 
-  // Updated resume download to use Cloudinary URL
   const downloadResume = () => {
     if (resumeUrl) {
+      // Add download parameter to force browser to download instead of opening
+      const downloadUrl = `${resumeUrl}?fl_attachment:${resumeFileName || "Vijay_Chalendra_Resume.pdf"}`
       const link = document.createElement("a")
       link.href = resumeUrl
-      // Use the stored file name or a default one
       link.download = resumeFileName || "Vijay_Chalendra_Resume.pdf"
+      link.target = "_blank"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)

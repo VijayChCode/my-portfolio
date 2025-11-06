@@ -11,13 +11,15 @@ export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData()
     const file = formData.get("file") as File
-    const fileType = formData.get("fileType") as string // 'resume' or 'profile'
+    const fileType = formData.get("fileType") as string
 
     if (!file) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 })
     }
 
-    // Convert file to buffer and create a data URI
+    console.log("[v0] Starting upload for:", file.name, "Type:", file.type)
+
+    // Convert file to buffer
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     const base64 = buffer.toString("base64")
@@ -27,14 +29,26 @@ export async function POST(request: NextRequest) {
       resource_type: fileType === "resume" ? "raw" : "auto",
       folder: `portfolio/${fileType}`,
       public_id: fileType === "resume" ? "Vijay_Chalendra_Resume" : `profile_${Date.now()}`,
-      overwrite: fileType === "resume" ? true : false,
+      overwrite: fileType === "resume",
       use_filename: false,
       unique_filename: fileType === "resume" ? false : true,
     }
 
+    console.log("[v0] Upload options:", uploadOptions)
+
     const result = await cloudinary.uploader.upload(dataURI, uploadOptions)
 
-    return NextResponse.json(result, { status: 200 })
+    console.log("[v0] Upload successful:", result.secure_url)
+
+    return NextResponse.json(
+      {
+        secure_url: result.secure_url,
+        public_id: result.public_id,
+        resource_type: result.resource_type,
+        original_filename: file.name,
+      },
+      { status: 200 },
+    )
   } catch (error: any) {
     console.error("[v0] Cloudinary upload error:", error)
     return NextResponse.json({ error: "Upload failed", details: error?.message || "Unknown error" }, { status: 500 })
