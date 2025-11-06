@@ -63,13 +63,13 @@ export default function Portfolio() {
 
       if (data.resumeUrl) {
         setResumeUrl(data.resumeUrl)
-        // If resumeFileName is not set by upload, set a default based on URL or keep it null
-        if (!resumeFileName) {
-          setResumeFileName("Resume (Uploaded)")
-        }
+        const urlParts = data.resumeUrl.split("/")
+        const fileName = urlParts[urlParts.length - 1]?.split("?")[0] || "Vijay_Chalendra_Resume"
+        setResumeFileName(`${fileName}.pdf`)
       }
       if (data.profileUrl) {
         setProfilePhoto(data.profileUrl)
+        console.log("[v0] Profile photo updated from cloud resources:", data.profileUrl)
       }
     } catch (error) {
       console.error("[v0] Error fetching cloud resources:", error)
@@ -296,13 +296,12 @@ export default function Portfolio() {
 
       if (data.secure_url) {
         console.log("[v0] Profile photo uploaded:", data.secure_url)
-        setProfilePhoto(data.secure_url)
         toast.success("Profile Photo Updated ✨", {
           description: `Your new profile photo has been uploaded to Cloudinary successfully!`,
           duration: 3000,
         })
-        // Then refresh to sync across tabs
-        setTimeout(() => fetchCloudResources(), 1000)
+        // Refresh to sync from cloud resources
+        setTimeout(() => fetchCloudResources(), 500)
       } else {
         toast.error("Upload Failed ⚠️", {
           description: "Error uploading photo. Please check console for details.",
@@ -362,14 +361,15 @@ export default function Portfolio() {
 
       if (data.secure_url) {
         console.log("[v0] Resume uploaded:", data.secure_url)
-        setResumeFileName(file.name)
+        const fileName = data.original_filename || file.name
+        setResumeFileName(fileName.endsWith(".pdf") ? fileName : `${fileName}.pdf`)
         setResumeUrl(data.secure_url)
         toast.success("Resume Uploaded 📄", {
           description: `${file.name} has been uploaded to Cloudinary successfully!`,
           duration: 3000,
         })
-        // Then refresh to sync across tabs
-        setTimeout(() => fetchCloudResources(), 1000)
+        // Refresh to sync across tabs
+        setTimeout(() => fetchCloudResources(), 500)
       } else {
         toast.error("Upload Failed ⚠️", {
           description: "Error uploading resume. Please check console for details.",
@@ -391,13 +391,15 @@ export default function Portfolio() {
 
   const downloadResume = () => {
     if (resumeUrl) {
-      const fileName = resumeFileName || "Vijay_Chalendra_Resume.pdf"
+      const fileName = resumeFileName && resumeFileName.includes(".pdf") ? resumeFileName : "Vijay_Chalendra_Resume.pdf"
+
       const downloadUrl = `${resumeUrl}${resumeUrl.includes("?") ? "&" : "?"}fl_attachment`
 
       const link = document.createElement("a")
       link.href = downloadUrl
       link.download = fileName
       link.target = "_blank"
+      link.rel = "noopener noreferrer"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
