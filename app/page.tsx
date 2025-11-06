@@ -5,6 +5,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { toast } from "sonner"
 import {
   Menu,
   X,
@@ -246,20 +247,30 @@ export default function Portfolio() {
 
   const handleAdminLogin = () => {
     if (adminPassword === "Salendra@2004") {
-      // Replace with your actual admin password logic
       setIsAdmin(true)
       setShowAdminLogin(false)
       setAdminPassword("")
+
+      toast.success("Welcome Admin! 🎉", {
+        description: "You have successfully logged in to admin panel.",
+        duration: 3000,
+      })
     } else {
-      alert("Incorrect password")
+      setAdminPassword("")
+      toast.error("Access Denied ❌", {
+        description: "Incorrect password. Please try again.",
+        duration: 3000,
+      })
     }
   }
 
   const handleAdminLogout = () => {
     setIsAdmin(false)
     setAdminPassword("")
-    // Optionally reset other admin-related states if needed
-    // setResumeFile(null); // This is now handled by resumeUrl state
+    toast.info("Logged Out 👋", {
+      description: "You have been logged out from admin panel.",
+      duration: 2000,
+    })
   }
 
   const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -267,6 +278,10 @@ export default function Portfolio() {
     if (!file) return
 
     setIsUploadingPhoto(true)
+    const loadingToastId = toast.loading("Uploading profile photo to Cloudinary...", {
+      description: "Please wait while we upload your image.",
+    })
+
     try {
       const formData = new FormData()
       formData.append("file", file)
@@ -282,29 +297,54 @@ export default function Portfolio() {
       if (data.secure_url) {
         console.log("[v0] Profile photo uploaded:", data.secure_url)
         setProfilePhoto(data.secure_url)
+        toast.success("Profile Photo Updated ✨", {
+          description: `Your new profile photo has been uploaded to Cloudinary successfully!`,
+          duration: 3000,
+        })
         // Then refresh to sync across tabs
         setTimeout(() => fetchCloudResources(), 1000)
-        alert("Profile photo updated successfully!")
       } else {
-        alert("Error uploading photo. Please check console for details.")
+        toast.error("Upload Failed ⚠️", {
+          description: "Error uploading photo. Please check console for details.",
+          duration: 3000,
+        })
         console.error("[v0] Cloudinary upload response:", data)
       }
     } catch (error) {
       console.error("[v0] Upload error:", error)
-      alert("Error uploading photo. Please try again.")
+      toast.error("Upload Error 🔴", {
+        description: "An unexpected error occurred. Please try again.",
+        duration: 3000,
+      })
     } finally {
       setIsUploadingPhoto(false)
+      toast.dismiss(loadingToastId)
     }
   }
 
   const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (!file || file.type !== "application/pdf") {
-      alert("Please upload a valid PDF file")
+    if (!file) {
+      toast.warning("No File Selected ⚠️", {
+        description: "Please select a file to upload.",
+        duration: 2000,
+      })
+      return
+    }
+
+    if (file.type !== "application/pdf") {
+      toast.error("Invalid File Type ❌", {
+        description: "Please upload a valid PDF file only.",
+        duration: 3000,
+      })
       return
     }
 
     setIsUploadingResume(true)
+    const loadingToastId = toast.loading("Uploading resume to Cloudinary...", {
+      description: `Processing ${file.name}...`,
+    })
+
     try {
       const formData = new FormData()
       formData.append("file", file)
@@ -324,25 +364,34 @@ export default function Portfolio() {
         console.log("[v0] Resume uploaded:", data.secure_url)
         setResumeFileName(file.name)
         setResumeUrl(data.secure_url)
+        toast.success("Resume Uploaded 📄", {
+          description: `${file.name} has been uploaded to Cloudinary successfully!`,
+          duration: 3000,
+        })
         // Then refresh to sync across tabs
         setTimeout(() => fetchCloudResources(), 1000)
-        alert("Resume uploaded successfully!")
       } else {
-        alert("Error uploading resume. Please check console for details.")
+        toast.error("Upload Failed ⚠️", {
+          description: "Error uploading resume. Please check console for details.",
+          duration: 3000,
+        })
         console.error("[v0] Upload error:", data)
       }
     } catch (error) {
       console.error("[v0] Resume upload error:", error)
-      alert("Error uploading resume. Please try again.")
+      toast.error("Upload Error 🔴", {
+        description: "An unexpected error occurred during upload.",
+        duration: 3000,
+      })
     } finally {
       setIsUploadingResume(false)
+      toast.dismiss(loadingToastId)
     }
   }
 
   const downloadResume = () => {
     if (resumeUrl) {
       const fileName = resumeFileName || "Vijay_Chalendra_Resume.pdf"
-      // Cloudinary download parameter: add ?fl_attachment to force download
       const downloadUrl = `${resumeUrl}${resumeUrl.includes("?") ? "&" : "?"}fl_attachment`
 
       const link = document.createElement("a")
@@ -353,8 +402,16 @@ export default function Portfolio() {
       link.click()
       document.body.removeChild(link)
       console.log("[v0] Resume downloaded from:", downloadUrl, "as:", fileName)
+
+      toast.success("Resume Downloaded 📥", {
+        description: `${fileName} is being downloaded to your device.`,
+        duration: 2000,
+      })
     } else {
-      alert("Resume not available. Please upload one in the admin panel.")
+      toast.warning("Resume Not Available 📭", {
+        description: "Please upload a resume in the admin panel first.",
+        duration: 3000,
+      })
     }
   }
 
@@ -856,8 +913,8 @@ export default function Portfolio() {
                       key={i}
                       className={
                         isDarkMode
-                          ? "bg-purple-500/20 text-purple-300 border-purple-500/50 hover:bg-purple-500/30"
-                          : "bg-purple-500/20 text-purple-700 border-purple-400/60 hover:bg-purple-500/30"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/50"
+                          : "bg-purple-500/20 text-purple-700 border-purple-400/60"
                       }
                     >
                       {skill}
@@ -889,8 +946,8 @@ export default function Portfolio() {
             <div
               className={`rounded-2xl p-8 transition-all duration-300 hover:shadow-lg group ${
                 isDarkMode
-                  ? "glass-effect-dark hover:border-emerald-400/50 hover:shadow-emerald-500/20 border border-emerald-400/20"
-                  : "glass-effect-light hover:border-emerald-400/60 hover:shadow-emerald-300/30 border border-emerald-300/40"
+                  ? "glass-effect-dark hover:border-emerald-400/50 hover:shadow-emerald-500/20"
+                  : "glass-effect-light hover:border-emerald-400/60 hover:shadow-emerald-300/30"
               }`}
             >
               <div className="flex items-start justify-between mb-6">
