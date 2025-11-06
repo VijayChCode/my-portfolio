@@ -21,6 +21,7 @@ import {
   HomeIcon,
   Moon,
   Sun,
+  Loader2,
 } from "lucide-react"
 
 export default function Portfolio() {
@@ -30,8 +31,11 @@ export default function Portfolio() {
   const [isAdmin, setIsAdmin] = useState(false)
   const [adminPassword, setAdminPassword] = useState("")
   const [showAdminLogin, setShowAdminLogin] = useState(false)
-  const [resumeFile, setResumeFile] = useState<File | null>(null)
+  const [resumeUrl, setResumeUrl] = useState<string | null>(null) // Changed from resumeFile to resumeUrl
   const [isDarkMode, setIsDarkMode] = useState(false)
+  const [isUploadingResume, setIsUploadingResume] = useState(false) // Added loading state for resume upload
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false) // Added loading state for photo upload
+  const [resumeFileName, setResumeFileName] = useState<string | null>(null) // Added to store the uploaded resume file name
 
   useEffect(() => {
     const isDark = localStorage.getItem("darkMode") === "true"
@@ -42,7 +46,30 @@ export default function Portfolio() {
     if (shouldBeDark) {
       document.documentElement.classList.add("dark")
     }
+
+    fetchCloudResources()
   }, [])
+
+  // Function to fetch resources from Cloudinary
+  const fetchCloudResources = async () => {
+    try {
+      // Assuming you have an API route at /api/cloud-resources that serves this data
+      const response = await fetch("/api/cloud-resources")
+      const data = await response.json()
+      console.log("[v0] Cloud resources fetched:", data)
+
+      if (data.resumeUrl) {
+        setResumeUrl(data.resumeUrl)
+        // Ideally, you'd also fetch and set the resume file name if available from your API
+        setResumeFileName("Resume (from Cloudinary)")
+      }
+      if (data.profileUrl) {
+        setProfilePhoto(data.profileUrl)
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching cloud resources:", error)
+    }
+  }
 
   const toggleDarkMode = () => {
     const newState = !isDarkMode
@@ -79,8 +106,8 @@ export default function Portfolio() {
 
   const skills = {
     programming: ["Python", "Java", "C", "HTML/CSS", "JavaScript", "SQL"],
-    tools: ["VS Code", "Git/GitHub"],
-    technologies: ["Front-end frameworks", "Basic networking concepts"],
+    tools: ["VS Code", "Git/GitHub", "Cloudinary"], // Added Cloudinary
+    technologies: ["React.js", "Next.js", "Tailwind CSS", "Node.js", "Express.js", "MongoDB"], // Added relevant technologies
   }
 
   const certifications = [
@@ -203,15 +230,7 @@ export default function Portfolio() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  useEffect(() => {
-    // Clean up the object URL when the component unmounts or resumeFile changes
-    return () => {
-      if (resumeFile) {
-        const url = URL.createObjectURL(resumeFile)
-        URL.revokeObjectURL(url)
-      }
-    }
-  }, [resumeFile])
+  // Removed the unused useEffect for resumeFile cleanup as we are now using URL
 
   const scrollToSection = (href: string) => {
     const element = document.getElementById(href.substring(1))
@@ -221,20 +240,9 @@ export default function Portfolio() {
     setIsMenuOpen(false)
   }
 
-  const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        const result = e.target?.result as string
-        setProfilePhoto(result)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   const handleAdminLogin = () => {
     if (adminPassword === "Salendra@2004") {
+      // Replace with your actual admin password logic
       setIsAdmin(true)
       setShowAdminLogin(false)
       setAdminPassword("")
@@ -246,31 +254,97 @@ export default function Portfolio() {
   const handleAdminLogout = () => {
     setIsAdmin(false)
     setAdminPassword("")
-    setResumeFile(null) // Reset resume file on logout
+    // Optionally reset other admin-related states if needed
+    // setResumeFile(null); // This is now handled by resumeUrl state
   }
 
-  const handleResumeUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Updated photo upload to use Cloudinary
+  const handlePhotoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
-    if (file && file.type === "application/pdf") {
-      setResumeFile(file)
-      alert("Resume uploaded successfully! Click the Resume button to download it.")
-    } else if (file) {
-      alert("Please upload a valid PDF file")
+    if (!file) return
+
+    setIsUploadingPhoto(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("fileType", "profile") // Add a type to differentiate uploads
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.secure_url) {
+        setProfilePhoto(data.secure_url)
+        alert("Profile photo updated successfully!")
+        console.log("[v0] Profile photo uploaded to Cloudinary:", data.secure_url)
+      } else {
+        // Handle cases where Cloudinary might return an error or no URL
+        alert("Error uploading photo. Please check console for details.")
+        console.error("[v0] Cloudinary upload response:", data)
+      }
+    } catch (error) {
+      console.error("[v0] Upload error:", error)
+      alert("Error uploading photo. Please check console for details.")
+    } finally {
+      setIsUploadingPhoto(false)
     }
   }
 
+  // Updated resume upload to use Cloudinary
+  const handleResumeUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file || file.type !== "application/pdf") {
+      alert("Please upload a valid PDF file")
+      return
+    }
+
+    setIsUploadingResume(true)
+    try {
+      const formData = new FormData()
+      formData.append("file", file)
+      formData.append("fileType", "resume") // Add a type to differentiate uploads
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      })
+
+      const data = await response.json()
+
+      if (data.secure_url) {
+        setResumeUrl(data.secure_url)
+        setResumeFileName(file.name) // Store the actual file name
+        alert("Resume uploaded successfully to Cloudinary!")
+        console.log("[v0] Resume uploaded:", data.secure_url)
+      } else {
+        // Handle cases where Cloudinary might return an error or no URL
+        alert("Error uploading resume. Please check console for details.")
+        console.error("[v0] Cloudinary upload response:", data)
+      }
+    } catch (error) {
+      console.error("[v0] Resume upload error:", error)
+      alert("Error uploading resume. Please check console for details.")
+    } finally {
+      setIsUploadingResume(false)
+    }
+  }
+
+  // Updated resume download to use Cloudinary URL
   const downloadResume = () => {
-    if (resumeFile) {
-      const url = URL.createObjectURL(resumeFile)
+    if (resumeUrl) {
       const link = document.createElement("a")
-      link.href = url
-      link.download = `Vijay_Chalendra_Resume.pdf`
+      link.href = resumeUrl
+      // Use the stored file name or a default one
+      link.download = resumeFileName || "Vijay_Chalendra_Resume.pdf"
       document.body.appendChild(link)
       link.click()
       document.body.removeChild(link)
-      URL.revokeObjectURL(url)
+      console.log("[v0] Resume downloaded from:", resumeUrl)
     } else {
-      alert("Please upload a resume first in the admin panel")
+      alert("Resume not available. Please upload one in the admin panel.")
     }
   }
 
@@ -364,22 +438,36 @@ export default function Portfolio() {
         </div>
       </nav>
 
-      {/* Resume Download Button */}
+      {/* Resume Download Button with Cloudinary URL */}
       <div className="fixed bottom-6 right-6 z-50">
         <button
           onClick={downloadResume}
-          className="group bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-2 backdrop-blur-md hover:shadow-blue-500/50 transition-all duration-200 hover:scale-105"
-          title="Download Resume"
+          disabled={!resumeUrl || isUploadingResume} // Disable if no URL or currently uploading
+          className={`group text-white px-6 py-3 rounded-full shadow-2xl flex items-center space-x-2 backdrop-blur-md transition-all duration-200 hover:scale-105 ${
+            resumeUrl && !isUploadingResume
+              ? "bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 hover:shadow-blue-500/50 cursor-pointer"
+              : "bg-gradient-to-r from-gray-400 to-gray-600 opacity-50 cursor-not-allowed"
+          }`}
+          title={resumeUrl ? "Download Resume from Cloudinary" : "Resume not uploaded yet"}
         >
-          <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
-          <span>Resume</span>
+          {isUploadingResume ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Uploading...</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5 group-hover:animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                />
+              </svg>
+              <span>Resume</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -455,7 +543,7 @@ export default function Portfolio() {
                 variant="outline"
               >
                 <Github className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span>{isDarkMode ? "GitHub" : "GitHub"}</span>
+                <span>GitHub</span>
               </Button>
               <Button
                 size="lg"
@@ -468,7 +556,7 @@ export default function Portfolio() {
                 variant="outline"
               >
                 <Linkedin className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                <span>{isDarkMode ? "LinkedIn" : "LinkedIn"}</span>
+                <span>LinkedIn</span>
               </Button>
               <Button
                 size="lg"
@@ -1038,7 +1126,7 @@ export default function Portfolio() {
                 <div className={`rounded-2xl p-8 ${isDarkMode ? "glass-effect-dark" : "glass-effect-light"}`}>
                   <h3 className="text-lg font-semibold text-foreground mb-2">Admin Access</h3>
                   <p className={`text-sm mb-4 ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                    Login to manage portfolio content and upload resume
+                    Login to manage portfolio content, upload resume, and update profile photo
                   </p>
                   {!showAdminLogin ? (
                     <Button onClick={() => setShowAdminLogin(true)} className="w-full" variant="outline">
@@ -1084,7 +1172,7 @@ export default function Portfolio() {
                     <div>
                       <h3 className="text-lg font-semibold text-foreground">Admin Controls</h3>
                       <p className={`text-sm ${isDarkMode ? "text-gray-400" : "text-gray-600"}`}>
-                        Manage portfolio and upload resume
+                        Manage portfolio and upload files to Cloudinary
                       </p>
                     </div>
                     <Button onClick={handleAdminLogout} variant="outline" size="sm">
@@ -1094,42 +1182,58 @@ export default function Portfolio() {
                   <div className="space-y-4">
                     <div>
                       <label htmlFor="resume-upload" className="block text-sm font-medium text-foreground mb-2">
-                        Upload Resume (PDF)
+                        Upload Resume to Cloudinary (PDF)
                       </label>
-                      <input
-                        type="file"
-                        id="resume-upload"
-                        accept=".pdf"
-                        onChange={handleResumeUpload}
-                        className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-500/20 file:text-blue-700 dark:file:text-blue-300
-              hover:file:bg-blue-500/30"
-                      />
-                      {resumeFile && (
+                      <div className="relative">
+                        <input
+                          type="file"
+                          id="resume-upload"
+                          accept=".pdf"
+                          onChange={handleResumeUpload}
+                          disabled={isUploadingResume}
+                          className="block w-full text-sm text-gray-500
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-blue-500/20 file:text-blue-700 dark:file:text-blue-300
+                hover:file:bg-blue-500/30
+                disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                      </div>
+                      {isUploadingResume && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Uploading to Cloudinary...
+                        </p>
+                      )}
+                      {resumeUrl && !isUploadingResume && (
                         <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                          ✓ {resumeFile.name} uploaded successfully
+                          ✓ {resumeFileName || "Resume"} uploaded successfully to Cloudinary
                         </p>
                       )}
                     </div>
                     <div>
                       <label htmlFor="photo-upload" className="block text-sm font-medium text-foreground mb-2">
-                        Update Profile Photo
+                        Update Profile Photo on Cloudinary
                       </label>
                       <input
                         type="file"
                         id="photo-upload"
                         accept="image/*"
                         onChange={handlePhotoUpload}
+                        disabled={isUploadingPhoto}
                         className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-md file:border-0
-              file:text-sm file:font-semibold
-              file:bg-purple-500/20 file:text-purple-700 dark:file:text-purple-300
-              hover:file:bg-purple-500/30"
+                file:mr-4 file:py-2 file:px-4
+                file:rounded-md file:border-0
+                file:text-sm file:font-semibold
+                file:bg-purple-500/20 file:text-purple-700 dark:file:text-purple-300
+                hover:file:bg-purple-500/30
+                disabled:opacity-50 disabled:cursor-not-allowed"
                       />
+                      {isUploadingPhoto && (
+                        <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1 flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Uploading to Cloudinary...
+                        </p>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1149,7 +1253,7 @@ export default function Portfolio() {
           <p className={isDarkMode ? "text-gray-400" : "text-gray-600"}>
             © 2025 Vijay Chalendra. Built with{" "}
             <span className="bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent font-semibold">
-              Next.js & Tailwind CSS
+              Next.js, Tailwind CSS & Cloudinary
             </span>
           </p>
         </div>
